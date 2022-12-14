@@ -31,8 +31,7 @@ class GetCatRequestHandler:
         self.repo = cats_repository
 
     def get_cat(self, _id):
-        cat = self.repo.get_by_id(_id)
-        return cat
+        return self.repo.get_by_id(_id)
 
 
 # NB: example of controller class;
