@@ -89,11 +89,11 @@ class LoggedVar(Generic[T_1]):
         self.value = value
 
     def set(self, new: T_1) -> None:
-        self.log("Set " + repr(self.value))
+        self.log(f"Set {repr(self.value)}")
         self.value = new
 
     def get(self) -> T_1:
-        self.log("Get " + repr(self.value))
+        self.log(f"Get {repr(self.value)}")
         return self.value
 
     def log(self, message: str) -> None:
@@ -934,6 +934,7 @@ def test_by_factory_with_different_parameters(method_name, factory):
     "method_name", ["add_transient_by_factory", "add_scoped_by_factory"]
 )
 def test_factory_can_receive_activating_type_as_parameter(method_name):
+
     @inject()
     class Logger:
         def __init__(self, name):
@@ -960,7 +961,7 @@ def test_factory_can_receive_activating_type_as_parameter(method_name):
 
     @inject()
     def factory(_, activating_type) -> Logger:
-        return Logger(activating_type.__module__ + "." + activating_type.__name__)
+        return Logger(f"{activating_type.__module__}.{activating_type.__name__}")
 
     method = getattr(container, method_name)
     method(factory)
@@ -993,6 +994,7 @@ def test_factory_can_receive_activating_type_as_parameter(method_name):
 def test_factory_can_receive_activating_type_as_parameter_nested_resolution():
     # NB: this scenario can only work when a class is registered as transient service
 
+
     class Logger:
         def __init__(self, name):
             self.name = name
@@ -1018,7 +1020,7 @@ def test_factory_can_receive_activating_type_as_parameter_nested_resolution():
     @inject()
     def factory(_, activating_type) -> Logger:
         # NB: this scenario is tested for rolog library
-        return Logger(activating_type.__module__ + "." + activating_type.__name__)
+        return Logger(f"{activating_type.__module__}.{activating_type.__name__}")
 
     container.add_transient_by_factory(factory)
 
@@ -1037,6 +1039,7 @@ def test_factory_can_receive_activating_type_as_parameter_nested_resolution():
 
 def test_factory_can_receive_activating_type_as_parameter_nested_resolution_many():
     # NB: this scenario can only work when a class is registered as transient service
+
 
     class Logger:
         def __init__(self, name):
@@ -1077,7 +1080,7 @@ def test_factory_can_receive_activating_type_as_parameter_nested_resolution_many
     @inject()
     def factory(_, activating_type) -> Logger:
         # NB: this scenario is tested for rolog library
-        return Logger(activating_type.__module__ + "." + activating_type.__name__)
+        return Logger(f"{activating_type.__module__}.{activating_type.__name__}")
 
     container.add_transient_by_factory(factory)
     container.add_instance(ServiceSettings("foo:foo"))
@@ -1931,16 +1934,19 @@ def test_annotation_resolution_transient():
 
 
 def test_annotations_abstract_type_transient_service():
+
     class FooCatsRepository(ICatsRepository):
         def get_by_id(self, _id) -> Cat:
             return Cat("foo")
+
+
 
     class GetCatRequestHandler:
         cats_repository: ICatsRepository
 
         def get_cat(self, _id):
-            cat = self.cats_repository.get_by_id(_id)
-            return cat
+            return self.cats_repository.get_by_id(_id)
+
 
     container = Container()
     container.add_transient(ICatsRepository, FooCatsRepository)

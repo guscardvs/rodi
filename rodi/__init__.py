@@ -463,20 +463,14 @@ class DynamicResolver:
                 if services.strict:
                     raise CannotResolveParameterException(param_name, concrete_type)
 
-                # support for exact, user defined aliases, without ambiguity
-                exact_alias = services._exact_aliases.get(param_name)
-
-                if exact_alias:
+                if exact_alias := services._exact_aliases.get(param_name):
                     param_type = exact_alias
-                else:
-                    aliases = services._aliases[param_name]
-
-                    if aliases:
-                        assert (
-                            len(aliases) == 1
-                        ), "Configured aliases cannot be ambiguous"
-                        for param_type in aliases:
-                            break
+                elif aliases := services._aliases[param_name]:
+                    assert (
+                        len(aliases) == 1
+                    ), "Configured aliases cannot be ambiguous"
+                    for param_type in aliases:
+                        break
 
             if param_type not in services._map:
                 raise CannotResolveParameterException(param_name, concrete_type)
@@ -531,12 +525,7 @@ class DynamicResolver:
         concrete_type = self.concrete_type
 
         fns = self._get_resolvers_for_parameters(concrete_type, context, params)
-        resolvers = {}
-
-        i = 0
-        for name in annotations.keys():
-            resolvers[name] = fns[i]
-            i += 1
+        resolvers = {name: fns[i] for i, name in enumerate(annotations)}
 
         return get_annotations_type_provider(
             self.concrete_type, resolvers, self.life_style, context
@@ -549,13 +538,11 @@ class DynamicResolver:
         chain.append(concrete_type)
 
         if getattr(concrete_type, "__init__") is object.__init__:
-            annotations = get_type_hints(
+            if annotations := get_type_hints(
                 concrete_type,
                 vars(sys.modules[concrete_type.__module__]),
                 _get_obj_locals(concrete_type),
-            )
-
-            if annotations:
+            ):
                 try:
                     return self._resolve_by_annotations(context, annotations)
                 except RecursionError:
@@ -595,9 +582,7 @@ all_cap_re = re.compile("([a-z0-9])([A-Z])")
 
 def to_standard_param_name(name):
     value = all_cap_re.sub(r"\1_\2", first_cap_re.sub(r"\1_\2", name)).lower()
-    if value.startswith("i_"):
-        return "i" + value[2:]
-    return value
+    return f"i{value[2:]}" if value.startswith("i_") else value
 
 
 class Services:
@@ -869,10 +854,7 @@ class Container:
         the singleton
         :return: the service collection itself
         """
-        self._bind(
-            instance.__class__ if not declared_class else declared_class,
-            InstanceResolver(instance),
-        )
+        self._bind(declared_class or instance.__class__, InstanceResolver(instance))
         return self
 
     def add_singleton(
